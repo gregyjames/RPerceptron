@@ -1,0 +1,95 @@
+---
+title: "R Perceptron"
+output: html_notebook
+---
+
+```{r}
+#Set the working directory
+setwd("/home/l33tninj4/Desktop/Github/RPerceptron/")
+
+#Load the datasets
+train10 = read.csv("data-10.csv")
+train50 = read.csv("data-50.csv")
+train500 = read.csv("data-500.csv")
+
+Classify <- function(x, weights) {
+  #Sign function on the dotproduct of the weights and the observed values
+  return(sign((x) %*% weights))
+}
+
+Graph <- function(weights, data){
+  #Calculate the slope for the hyperplane
+  slope = -(weights[1]/weights[3])/(weights[1]/weights[2])  
+  #Calculate the intercept for the hyperplane
+  intercept = -weights[1]/weights[3]
+  #Plot the data points
+  plot(data$x1, data$x2,col = ifelse(data[, 1] == 1, "blue", "red"))
+  #Draw the hyperplane
+  abline(intercept, slope)
+}
+
+Perceptron <- function(data, learningRate) {
+  #Make the weights vector with 0s for each data coloumn
+  w <- c(rep(0, ncol(data) -1))
+  #The number of rows in the dataframe
+  n <- nrow(data)
+  #Get the labels from the dataframe
+  label <- data[ , 1]
+  #Get the data from from the dataframe
+  obs <- data[ , 2:ncol(data)]
+  #We start assuming that the data is misclassifies
+  misclassfied <- TRUE
+  #Store the epoc count
+  epoc <- 0
+  #Vector to store the predicted values
+  predictedV <- c(rep(0, n))
+  #Store the average error for each Epoc
+  avgErr <- 0
+  
+  while (misclassfied) {
+    #Store the sum or errors for each Epoc
+    sumErr <- 0
+    #Assume that the data isn't misclassified
+    misclassfied <- FALSE
+    for (i in 1:n) {
+      #Get the predicted value from the Classify function (WeightsxData columns)
+      predicted <- Classify(as.numeric(obs[i , ]), w)[1,1]
+      #Store the predicted value in the vector
+      predictedV[i] = predicted
+      
+      #If we miss classified the observaion
+      if(predicted != label[i]){
+        misclassfied = TRUE
+        #Calculate how we should update the weight vector
+        change <- (learningRate * (label[i] - predicted)) * obs[i , ]
+        #Update the weight vector
+        w <- w + as.numeric(change)
+        #Add this error for the total sum of errors for this epoc
+        sumErr <- sumErr + (abs(label[i] - predictedV[i]))
+      }
+    }
+    #Calculate the average error for all epocs
+    avgErr <- (avgErr + (sumErr/n))/2
+    #Update the number of Epocs
+    epoc <- epoc + 1
+  }
+  #Print the average error and the number of EPOCS
+  print(paste("Avg Error rate per epoc: ", as.character(avgErr)))
+  print(paste("EPOC: ", as.character(epoc)))
+  #Return the weight vector
+  return(w)
+}
+
+print("Data Set 10")
+w10 <- Perceptron(train10, 0.5)
+Graph(w10, train10)
+
+print("Data Set 50")
+w50 <- Perceptron(train50, 0.5)
+Graph(w50, train50)
+
+print("Data Set 500")
+w500 <-Perceptron(train500, 0.5)
+Graph(w500, train500)
+```
+
